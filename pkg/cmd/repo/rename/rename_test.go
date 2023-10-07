@@ -188,7 +188,7 @@ func TestRenameRun(t *testing.T) {
 			},
 			wantOut: "✓ Renamed repository OWNER/NEW_REPO\n✓ Updated the \"origin\" remote\n",
 			promptStubs: func(pm *prompter.MockPrompter) {
-				pm.RegisterConfirm("Rename OWNER/REPO to NEW_REPO?", func(_ string, _ bool) (bool, error) {
+				pm.RegisterConfirm("Rename OWNER/REPO to OWNER/NEW_REPO?", func(_ string, _ bool) (bool, error) {
 					return true, nil
 				})
 			},
@@ -210,7 +210,7 @@ func TestRenameRun(t *testing.T) {
 				DoConfirm:       true,
 			},
 			promptStubs: func(pm *prompter.MockPrompter) {
-				pm.RegisterConfirm("Rename OWNER/REPO to NEW_REPO?", func(_ string, _ bool) (bool, error) {
+				pm.RegisterConfirm("Rename OWNER/REPO to OWNER/NEW_REPO?", func(_ string, _ bool) (bool, error) {
 					return false, nil
 				})
 			},
