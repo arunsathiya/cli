@@ -112,10 +112,12 @@ func renameRun(opts *RenameOptions) error {
 		newRepoName = strings.Split(newRepoName, "/")[1]
 	}
 
+	newRepoWithOwner := ghrepo.New(currRepo.RepoOwner(), newRepoName)
+
 	if opts.DoConfirm {
 		var confirmed bool
 		if confirmed, err = opts.Prompter.Confirm(fmt.Sprintf(
-			"Rename %s to %s?", ghrepo.FullName(currRepo), newRepoName), false); err != nil {
+			"Rename %s to %s?", ghrepo.FullName(currRepo), ghrepo.FullName(newRepoWithOwner)), false); err != nil {
 			return err
 		}
 		if !confirmed {
