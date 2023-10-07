@@ -75,6 +75,7 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 				return runf(opts)
 			}
 
+			opts.DoConfirm = true
 			return renameRun(opts)
 		},
 	}
