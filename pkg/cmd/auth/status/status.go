@@ -127,8 +127,9 @@ type StatusOptions struct {
 	IO         *iostreams.IOStreams
 	Config     func() (gh.Config, error)
 
-	Hostname  string
-	ShowToken bool
+	Hostname   string
+	ShowToken  bool
+	ActiveOnly bool
 }
 
 func NewCmdStatus(f *cmdutil.Factory, runF func(*StatusOptions) error) *cobra.Command {
@@ -163,6 +164,7 @@ func NewCmdStatus(f *cmdutil.Factory, runF func(*StatusOptions) error) *cobra.Co
 
 	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "h", "", "Check only a specific hostname's auth status")
 	cmd.Flags().BoolVarP(&opts.ShowToken, "show-token", "t", false, "Display the auth token")
+	cmd.Flags().BoolVar(&opts.ActiveOnly, "active", false, "Display only the active account")
 
 	return cmd
 }
@@ -224,25 +226,27 @@ func statusRun(opts *StatusOptions) error {
 			err = cmdutil.SilentError
 		}
 
-		users := authCfg.UsersForHost(hostname)
-		for _, username := range users {
-			if username == activeUser {
-				continue
-			}
-			token, tokenSource, _ := authCfg.TokenForUser(hostname, username)
-			entry := buildEntry(httpClient, buildEntryOptions{
-				active:      false,
-				gitProtocol: gitProtocol,
-				hostname:    hostname,
-				showToken:   opts.ShowToken,
-				token:       token,
-				tokenSource: tokenSource,
-				username:    username,
-			})
-			statuses[hostname] = append(statuses[hostname], entry)
+		if !opts.ActiveOnly {
+			users := authCfg.UsersForHost(hostname)
+			for _, username := range users {
+				if username == activeUser {
+					continue
+				}
+				token, tokenSource, _ := authCfg.TokenForUser(hostname, username)
+				entry := buildEntry(httpClient, buildEntryOptions{
+					active:      false,
+					gitProtocol: gitProtocol,
+					hostname:    hostname,
+					showToken:   opts.ShowToken,
+					token:       token,
+					tokenSource: tokenSource,
+					username:    username,
+				})
+				statuses[hostname] = append(statuses[hostname], entry)
 
-			if err == nil && !isValidEntry(entry) {
-				err = cmdutil.SilentError
+				if err == nil && !isValidEntry(entry) {
+					err = cmdutil.SilentError
+				}
 			}
 		}
 	}
