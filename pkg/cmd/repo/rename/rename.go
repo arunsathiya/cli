@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
@@ -144,6 +146,34 @@ func renameRun(opts *RenameOptions) error {
 		fmt.Fprintf(opts.IO.Out, "%s Updated the %q remote\n", cs.SuccessIcon(), remote.Name)
 	}
 
+	if err := renameLocalDirectory(currRepo.RepoName(), newRepo.RepoName(), opts); err != nil {
+		fmt.Fprintf(opts.IO.ErrOut, "%s Warning: unable to rename local directory: %v\n", cs.WarningIcon(), err)
+	}
+
+	return nil
+}
+
+func renameLocalDirectory(oldName, newName string, opts *RenameOptions) error {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	if filepath.Base(currentDir) == oldName {
+		rename, err := opts.Prompter.Confirm(fmt.Sprintf("Rename local directory from %s to %s?", oldName, newName), true)
+		if err != nil {
+			return err
+		}
+		if rename {
+			newPath := filepath.Join(filepath.Dir(currentDir), newName)
+			if err := os.Rename(currentDir, newPath); err != nil {
+				return err
+			}
+			if opts.IO.IsStdoutTTY() {
+				fmt.Fprintf(opts.IO.Out, "%s Renamed local directory to %s\n", opts.IO.ColorScheme().SuccessIcon(), newName)
+			}
+		}
+	}
 	return nil
 }
 
