@@ -173,12 +173,15 @@ func renameLocalDirectory(oldName, newName string, opts *RenameOptions) error {
 		}
 
 		if rename {
-			newPath := filepath.Join(filepath.Dir(currentDir), newName)
+			parentDir := filepath.Dir(currentDir)
+			newPath := filepath.Join(parentDir, newName)
 			if err := os.Rename(currentDir, newPath); err != nil {
 				return err
 			}
 			if opts.IO.IsStdoutTTY() {
 				fmt.Fprintf(opts.IO.Out, "%s Renamed local directory to %s\n", opts.IO.ColorScheme().SuccessIcon(), newName)
+				fmt.Fprintf(opts.IO.Out, "\nTo update your shell's working directory, run:\n")
+				fmt.Fprintf(opts.IO.Out, "  cd %s\n", newPath)
 			}
 		}
 	}
