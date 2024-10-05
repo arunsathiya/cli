@@ -160,7 +160,7 @@ func renameLocalDirectory(oldName, newName string, opts *RenameOptions) error {
 	}
 
 	if filepath.Base(currentDir) == oldName {
-		rename, err := opts.Prompter.Confirm(fmt.Sprintf("Rename local directory from %s to %s?", oldName, newName), true)
+		rename, err := opts.Prompter.Confirm(fmt.Sprintf("Rename local directory from %s to %s?", oldName, newName), false)
 		if err != nil {
 			return err
 		}
