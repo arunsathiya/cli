@@ -34,6 +34,7 @@ type RenameOptions struct {
 	DoConfirm       bool
 	HasRepoOverride bool
 	newRepoSelector string
+	RenameDir       bool
 }
 
 func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Command {
@@ -84,6 +85,7 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 	cmd.Flags().BoolVar(&confirm, "confirm", false, "Skip confirmation prompt")
 	_ = cmd.Flags().MarkDeprecated("confirm", "use `--yes` instead")
 	cmd.Flags().BoolVarP(&confirm, "yes", "y", false, "Skip the confirmation prompt")
+	cmd.Flags().BoolVar(&opts.RenameDir, "rename-dir", false, "Rename local directory")
 
 	return cmd
 }
@@ -146,8 +148,10 @@ func renameRun(opts *RenameOptions) error {
 		fmt.Fprintf(opts.IO.Out, "%s Updated the %q remote\n", cs.SuccessIcon(), remote.Name)
 	}
 
-	if err := renameLocalDirectory(currRepo.RepoName(), newRepo.RepoName(), opts); err != nil {
-		fmt.Fprintf(opts.IO.ErrOut, "%s Warning: unable to rename local directory: %v\n", cs.WarningIcon(), err)
+	if opts.RenameDir || (!opts.HasRepoOverride && opts.IO.CanPrompt()) {
+		if err := renameLocalDirectory(currRepo.RepoName(), newRepo.RepoName(), opts); err != nil {
+			fmt.Fprintf(opts.IO.ErrOut, "%s Warning: unable to rename local directory: %v\n", cs.WarningIcon(), err)
+		}
 	}
 
 	return nil
@@ -160,10 +164,14 @@ func renameLocalDirectory(oldName, newName string, opts *RenameOptions) error {
 	}
 
 	if filepath.Base(currentDir) == oldName {
-		rename, err := opts.Prompter.Confirm(fmt.Sprintf("Rename local directory from %s to %s?", oldName, newName), false)
-		if err != nil {
-			return err
+		rename := opts.RenameDir
+		if !rename && opts.IO.CanPrompt() {
+			rename, err = opts.Prompter.Confirm(fmt.Sprintf("Rename local directory from %s to %s?", oldName, newName), false)
+			if err != nil {
+				return err
+			}
 		}
+
 		if rename {
 			newPath := filepath.Join(filepath.Dir(currentDir), newName)
 			if err := os.Rename(currentDir, newPath); err != nil {
